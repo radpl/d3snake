@@ -49,9 +49,10 @@
             var obstacleElements = 10;
             var elements = 15;
             var counter = 0;
-            var lastElement = 14;
+            var lastElement = 15;
             var prevCoords;
             var initialized = false;
+            var start1 = "";
             
 			//Create SVG element
 			var svg = d3.select("body")
@@ -198,8 +199,15 @@
      function test() {
          
          console.log("last element: " + lastElement);
-         if (lastElement === 14)
-         {   
+         var numOfElements = d3.select("g").selectAll("circle").size();
+         console.log("numOfElements: " + numOfElements);
+         console.log("coords: " + JSON.stringify(coords));
+         console.log("prevcoords: " + JSON.stringify(prevCoords));
+         //start1 = "";
+         console.log("start1" + start1);
+         if (lastElement === numOfElements )
+         {  
+             console.log("lastElement === numOfElements");
              var x1 = coords.x1; var y1 = coords.y1; 
              var x2 = coords.x2; var y2 = coords.y2;
              var x3 = coords.x3; var y3 = coords.y3;
@@ -208,7 +216,7 @@
                 .each(function (d, i) {
                 d3.select(this)
                     .attr("cx", x1).attr("cy", y1)
-                    .transition().on("start", function() { lastElement = i; console.log("start 0 last element " + i)})
+                    .transition().on("start", function() { lastElement = i + 1; console.log("start 0 last element " + i)})
                     .tween('collision', detect)
                     .ease(d3.easeLinear)
                     .duration(speed * factor)
@@ -221,8 +229,10 @@
                     .duration(speed * (1 - factor))
                     .attr("cx", x1).attr("cy", y1)
                     .on("start", function repeat() {
+                        if (start1 === "mode1") return;
                         console.log("start 1 last element " + i);
-                        lastElement = i;
+                        lastElement = i + 1;
+                        start1 = "start1";
                         d3.active(this)
                         .transition()
                         .tween('collision', detect)
@@ -241,21 +251,43 @@
          }
          else
          {   
+             console.log("lastElement !== numOfElements" + lastElement + "!==" + numOfElements);
+             console.log("coords: " + JSON.stringify(coords));
+             console.log("prevcoords: " + JSON.stringify(prevCoords));
              
              var cx1 = coords.x1; var cy1 = coords.y1; 
              var cx2 = coords.x2; var cy2 = coords.y2;
              var cx3 = coords.x3; var cy3 = coords.y3;
+             
              var px1 = prevCoords.x1; var py1 = prevCoords.y1; 
              var px2 = prevCoords.x2; var py2 = prevCoords.y2;
              var px3 = prevCoords.x3; var py3 = prevCoords.y3;
-             
+                
+                if (start1 === "start1")
+                {
+                    switch(prevDirection) {
+                        case 37:
+                            px1 = w + outer + 1.5; 
+                            break;
+                        case 38:
+                            py1 = h + outer + 1.5;
+                            break;
+                        case 39:
+                            px1 = 0 - outer - 1.5;
+                            break;
+                        case 40:
+                            py1 = h - outer - 1.5;
+                            break;     
+                    }
+                        start1 = "mode1";
+                }
                 g.selectAll("circle")
                 .each(function (d, i) {
-                if (i <= lastElement)
-                {
+                if (i + 1 <= lastElement)
+                {  console.log("if " + " cx1 " + cx1 + " cy1 " + cy1 );
                     d3.select(this)
                     .attr("cx", cx1).attr("cy", cy1)
-                    .transition()
+                    .transition().on("start", function() {console.log("if " + i);})
                     .tween('collision', detect)
                     .ease(d3.easeLinear)
                     .duration(speed * factor)
@@ -269,7 +301,8 @@
                     .attr("cx", cx1).attr("cy", cy1)
                     .on("start", function repeat() {
                         console.log("start 2 last element " + i);
-                        lastElement = i;
+                        start1 = "start1";
+                        lastElement = i + 1;
                         d3.active(this)
                         .transition()
                         .tween('collision', detect)
@@ -285,10 +318,61 @@
                         .on("start", repeat)})
                 }
                 else
-                {
+                {   console.log("els " + " px1 " + px1 + " py1 " + py1 + " cx1 " + cx1 + " cy1 " + cy1);
+                    /*if (start1 === "mode1") 
+                    {   console.log("in mode1");
+                        d3.select(this).transition()
+                            .duration(0)
+                            .delay(i * delay)
+                            .attr("cx", px1).attr("cy", py1)
+                            .transition()
+                            .duration(0)
+                            .attr("cx", cx1).attr("cy", cy1)
+                            .transition();
+                     */
+                        //d3.select(this).delay(i * delay).interrupt();
+                            /*.attr("cx", px1).attr("cy", py1)
+                            .transition()
+                            .ease(d3.easeLinear)
+                            .duration(0)
+                            .delay(i * delay)
+                            .attr("cx", cx1).attr("cy", cy1)
+                            .interrupt();*/
+                        //d3.select(this).interrupt();
+                            /*.attr("cx", cx1).attr("cy", cy1)
+                            .transition().on("start", function() {console.log("if " + i);})
+                            .tween('collision', detect)
+                            .ease(d3.easeLinear)
+                            .duration(speed * factor)
+                            .delay(i * delay)   
+                            .attr("cx", cx2).attr("cy", cy2 )
+                            .transition()
+                            .duration(0)
+                            .attr("cx", cx3).attr("cy", cy3)
+                            .transition()
+                            .duration(speed * (1 - factor))
+                            .attr("cx", cx1).attr("cy", cy1)
+                            .on("start", function repeat() {
+                                console.log("start 3a last element " + i);
+                                start1 = "start1";
+                                lastElement = i + 1;
+                                d3.active(this)
+                                .transition()
+                                .tween('collision', detect)
+                                .ease(d3.easeLinear)
+                                .duration(speed * factor)
+                                .attr("cx", cx2).attr("cy", cy2 )
+                                .transition()
+                                .duration(0)
+                                .attr("cx", cx3).attr("cy", cy3)
+                                .transition()
+                                .duration(speed * (1 - factor))
+                                .attr("cx", cx1).attr("cy", cy1)
+                                .on("start", repeat)});*/
+  
                     d3.select(this)
                     .attr("cx", px1).attr("cy", py1)
-                    .transition()
+                    .transition().on("start", function() {console.log("else " + i);})
                     .tween('collision', detect)
                     .ease(d3.easeLinear)
                     .duration(0)
@@ -305,8 +389,9 @@
                     .duration(speed * (1 - factor))
                     .attr("cx", cx1).attr("cy", cy1)
                     .on("start", function repeat() {
+                        start1 = "start1";
                         console.log("start 3 last element " + i);
-                        lastElement = i;
+                        lastElement = i + 1;
                         d3.active(this)
                         .transition()
                         .tween('collision', detect)
@@ -320,10 +405,11 @@
                         .duration(speed * (1 - factor))
                         .attr("cx", cx1).attr("cy", cy1)
                         .on("start", repeat)})
-                    
+                
                 }
              });
              
+             //prevCoords = coords;
          }
          
      }
