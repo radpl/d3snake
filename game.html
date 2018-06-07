@@ -53,6 +53,11 @@
             var prevCoords;
             var initialized = false;
             var start1 = "";
+            var start2 = "";
+            var start3 = "";
+            var growNow = false;
+            var newElement;
+            var nextRun = 0;
             
 			//Create SVG element
 			var svg = d3.select("body")
@@ -80,20 +85,8 @@
                     .attr("class",function(d) {return d;});
       
             var head = g.select("circle").style("fill","lightgreen").attr("class","head");
-        
-         function grow(){
-            console.log("grow");
-            elements += 1;
-            
-            yScale = d3.scalePoint().domain(d3.range(elements)).range([0, h]);
-             
-                    g.selectAll("circle")
-                    .data(yScale.domain())
-                    .enter().append("circle")
-                    .attr("r", r)
-                    .attr("fill", function(d,i) { return c20(i); } )
-                    .attr("class",function(d) {return d;});
-        }
+        //grow
+
         
         //Generate obstacles and rewards
         var dataset = [];											
@@ -170,9 +163,7 @@
                   //else steer();
                   break;     
         }
-   //multiple();  
-  //steer();
-     test();
+     steer();
      
   prevDirection = key;
 
@@ -184,19 +175,7 @@
         .on("end", function() { if (!--n) callback.apply(this, arguments); }); 
   }
 
-     function multiple()
-     {
-         var x1 = coords.x1; var y1 = coords.y1; 
-         var x2 = coords.x2; var y2 = coords.y2;
-
-         counter++;
-         test(x1,x2,y1,y2);
-         //if (counter > 0) test1(x1,x2,y1,y2,px1,px2,py1 py2);
-         var px1 = coords.x1; var py1 = coords.y1; 
-         var px2 = coords.x2; var py2 = coords.y2;
-     }
-     
-     function test() {
+     function steer() {
          
          console.log("last element: " + lastElement);
          var numOfElements = d3.select("g").selectAll("circle").size();
@@ -214,9 +193,9 @@
 
              g.selectAll("circle")
                 .each(function (d, i) {
-                d3.select(this)
+                    d3.select(this)
                     .attr("cx", x1).attr("cy", y1)
-                    .transition().on("start", function() { lastElement = i + 1; console.log("start 0 last element " + i)})
+                    .transition().on("start", function() { start1 = "start0"; lastElement = i + 1; console.log("start 0 last element " + i)})
                     .tween('collision', detect)
                     .ease(d3.easeLinear)
                     .duration(speed * factor)
@@ -229,6 +208,7 @@
                     .duration(speed * (1 - factor))
                     .attr("cx", x1).attr("cy", y1)
                     .on("start", function repeat() {
+                        console.log("start1 " + start1);
                         if (start1 === "mode1") return;
                         console.log("start 1 last element " + i);
                         lastElement = i + 1;
@@ -245,8 +225,11 @@
                         .transition()
                         .duration(speed * (1 - factor))
                         .attr("cx", x1).attr("cy", y1)
-                        .on("start", repeat)});
+                        .on("start", repeat); 
+                        });
+                 
              });
+             
              prevCoords = coords;
          }
          else
@@ -281,6 +264,9 @@
                     }
                         start1 = "mode1";
                 }
+                if (start2 === "start2") start2 = "mode2";
+                if (start3 === "start3") start3 = "mode3";
+             
                 g.selectAll("circle")
                 .each(function (d, i) {
                 if (i + 1 <= lastElement)
@@ -299,9 +285,12 @@
                     .transition()
                     .duration(speed * (1 - factor))
                     .attr("cx", cx1).attr("cy", cy1)
+                    //.attr("opacity", 1)
                     .on("start", function repeat() {
+                        //if (start2 === "mode2") return;
                         console.log("start 2 last element " + i);
-                        start1 = "start1";
+                        //start1 = "start1";
+                        start2 = "start2";
                         lastElement = i + 1;
                         d3.active(this)
                         .transition()
@@ -315,62 +304,52 @@
                         .transition()
                         .duration(speed * (1 - factor))
                         .attr("cx", cx1).attr("cy", cy1)
-                        .on("start", repeat)})
-                }
-                else
-                {   console.log("els " + " px1 " + px1 + " py1 " + py1 + " cx1 " + cx1 + " cy1 " + cy1);
-                    /*if (start1 === "mode1") 
-                    {   console.log("in mode1");
-                        d3.select(this).transition()
-                            .duration(0)
-                            .delay(i * delay)
-                            .attr("cx", px1).attr("cy", py1)
-                            .transition()
-                            .duration(0)
-                            .attr("cx", cx1).attr("cy", cy1)
-                            .transition();
-                     */
-                        //d3.select(this).delay(i * delay).interrupt();
-                            /*.attr("cx", px1).attr("cy", py1)
-                            .transition()
-                            .ease(d3.easeLinear)
-                            .duration(0)
-                            .delay(i * delay)
-                            .attr("cx", cx1).attr("cy", cy1)
-                            .interrupt();*/
-                        //d3.select(this).interrupt();
-                            /*.attr("cx", cx1).attr("cy", cy1)
-                            .transition().on("start", function() {console.log("if " + i);})
+                        .on("start", repeat);
+                        
+                        /*if (growNow )
+                        {   console.log("################# grow now #####################");
+                            growNow = false;
+                            newElement
+                            .attr("cx", x1).attr("cy", y1)
+                            .transition().on("start", function() { lastElement = i + 1; console.log("new start 0 last element " + i)})
                             .tween('collision', detect)
                             .ease(d3.easeLinear)
                             .duration(speed * factor)
-                            .delay(i * delay)   
-                            .attr("cx", cx2).attr("cy", cy2 )
+                            .delay((i +1) * delay)   
+                            .attr("cx", x2).attr("cy", y2 )
                             .transition()
                             .duration(0)
-                            .attr("cx", cx3).attr("cy", cy3)
+                            .attr("cx", x3).attr("cy", y3)
                             .transition()
                             .duration(speed * (1 - factor))
-                            .attr("cx", cx1).attr("cy", cy1)
+                            .attr("cx", x1).attr("cy", y1)
+                            .attr("opacity", 1)
                             .on("start", function repeat() {
-                                console.log("start 3a last element " + i);
+                                if (start1 === "mode1") return;
+                                console.log("new start 1 last element " + i);
+                                lastElement = (i +1) + 1;
                                 start1 = "start1";
-                                lastElement = i + 1;
                                 d3.active(this)
                                 .transition()
                                 .tween('collision', detect)
                                 .ease(d3.easeLinear)
                                 .duration(speed * factor)
-                                .attr("cx", cx2).attr("cy", cy2 )
+                                .attr("cx", x2).attr("cy", y2 )
                                 .transition()
                                 .duration(0)
-                                .attr("cx", cx3).attr("cy", cy3)
+                                .attr("cx", x3).attr("cy", y3)
                                 .transition()
                                 .duration(speed * (1 - factor))
-                                .attr("cx", cx1).attr("cy", cy1)
-                                .on("start", repeat)});*/
-  
-                    d3.select(this)
+                                .attr("cx", x1).attr("cy", y1)
+                                .on("start", repeat);});
+                        }*/
+                        
+                    });
+                }
+                else
+                {   console.log("els " + " px1 " + px1 + " py1 " + py1 + " cx1 " + cx1 + " cy1 " + cy1);
+                    
+                 d3.select(this)
                     .attr("cx", px1).attr("cy", py1)
                     .transition().on("start", function() {console.log("else " + i);})
                     .tween('collision', detect)
@@ -388,8 +367,12 @@
                     .transition()
                     .duration(speed * (1 - factor))
                     .attr("cx", cx1).attr("cy", cy1)
+                    //.attr("opacity", 1)
                     .on("start", function repeat() {
-                        start1 = "start1";
+                        //console.log("start3 ");
+                        //if (start3 !== "" && start1 === "mode1") start3 = ""; return;
+                        //start1 = "start1";
+                        //start3 = "start3";
                         console.log("start 3 last element " + i);
                         lastElement = i + 1;
                         d3.active(this)
@@ -404,7 +387,49 @@
                         .transition()
                         .duration(speed * (1 - factor))
                         .attr("cx", cx1).attr("cy", cy1)
-                        .on("start", repeat)})
+                        .on("start", repeat);
+                    
+                        /*if (growNow )
+                        {   console.log("################# grow now #####################");
+                            growNow = false;
+                            newElement
+                            .attr("cx", px1).attr("cy", py1)
+                            .transition().on("start", function() {console.log("else " + i);})
+                            .tween('collision', detect)
+                            .ease(d3.easeLinear)
+                            .duration(0)
+                            .delay((i +1) * delay)   
+                            .attr("cx", cx1).attr("cy", cy1 )
+                            .transition()
+                            .duration(speed * factor)
+                            .delay(0)
+                            .attr("cx", cx2).attr("cy", cy2 )
+                            .transition()
+                            .duration(0)
+                            .attr("cx", cx3).attr("cy", cy3)
+                            .transition()
+                            .duration(speed * (1 - factor))
+                            .attr("cx", cx1).attr("cy", cy1)
+                            .attr("opacity", 1)
+                            .on("start", function repeat() {
+                                start1 = "start1";
+                                console.log("start 3 last element " + i);
+                                lastElement = i + 1 + 1;
+                                d3.active(this)
+                                .transition()
+                                .tween('collision', detect)
+                                .ease(d3.easeLinear)
+                                .duration(speed * factor)
+                                .attr("cx", cx2).attr("cy", cy2 )
+                                .transition()
+                                .duration(0)
+                                .attr("cx", cx3).attr("cy", cy3)
+                                .transition()
+                                .duration(speed * (1 - factor))
+                                .attr("cx", cx1).attr("cy", cy1)
+                                .on("start", repeat);});
+                        }*/
+                    });
                 
                 }
              });
@@ -413,6 +438,29 @@
          }
          
      }
+     
+            function grow(){
+            //growNow = false;
+            console.log("grow");
+            elements += 1;
+            
+            yScale = d3.scalePoint().domain(d3.range(elements)).range([0, h]);
+             
+                    g.selectAll("circle")
+                    .data(yScale.domain())
+                    .enter().append("circle")
+                    .attr("r", r)
+                    .attr("cx", -2)
+                    .attr("cy", - 2)
+                    //.attr("opacity", 0)
+                    .attr("fill", function(d,i) { return c20(i); } )
+                    .attr("class",function(d) {return d;});
+                    
+                    newElement =  d3.select("g").selectAll("circle:last-child");
+        }
+     
+     
+     
      function test1() {
          console.log("counter " + counter)
          var x1 = coords.x1; var y1 = coords.y1; 
@@ -428,6 +476,7 @@
          .delay(function(d) {return d * delay; })   
          .attr("cx", x2).attr("cy", y2 );
      }
+     
      function steer() {
          var x1 = coords.x1; var y1 = coords.y1; 
          var x2 = coords.x2; var y2 = coords.y2;
@@ -490,6 +539,7 @@
                  a.x = -1; a.y = -1;
                  scoreCounter++;
                  lastElement++;
+                 growNow = true;
                  return true;
              }
          }
